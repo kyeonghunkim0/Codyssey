@@ -1,5 +1,4 @@
 # Tool : PyCharm
-
 # 설치가 잘 되었는지 확인 하기 위해서 ‘Hello Mars’를 출력해 본다.
 print("Hello Mars")
 #  log 파일을 열기
@@ -31,7 +30,7 @@ if any("explosion" in entry['message'] for entry in incident_logs):
 
 # Markdown 작성
 markdown_content = f"## 사고 원인 분석\n\n"
-markdown_content += f"**사고 원인:** {cause if cause else '원인 미상'}\n\n" # 원인이 없다며 
+markdown_content += f"**사고 원인:** {cause if cause else '원인 미상'}\n\n" # 원인이 없다며
 markdown_content += "## 로그 타임라인\n\n"
 
 # 로그 타임라인 생성
