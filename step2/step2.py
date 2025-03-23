@@ -1,4 +1,5 @@
 import csv
+import struct
 
 # csv 파일을 읽는 함수
 def read_csv_file(filepath):
@@ -24,8 +25,9 @@ header, csv_data = read_csv_file('Mars_Base_Inventory_List.csv')
 # 배열 내용을 적제 화물 목록을 인화성이 높은 순으로 정렬
 sort_data = sort_data_by_flammability(csv_data)
 
-# 인화성 지수가 0.7 이상되는 목록을 뽑아서 별도로 출력한다.
+# 인화성 지수가 0.7 이상되는 목록을 뽑아서 별도로 출력
 dangerous_data = filter_data_by_dangerous(sort_data)
+print('====== dangerous_data ======')
 print(dangerous_data)
 
 def create_csv_file(filePath, header, data):
@@ -35,6 +37,37 @@ def create_csv_file(filePath, header, data):
         writer.writerow(header)  # 헤더 추가
         writer.writerows(data)   # 데이터 추가
 
-# 인화성 지수가 0.7 이상되는 목록을 CSV 포멧(Mars_Base_Inventory_danger.csv)으로 저장한다.
+# 인화성 지수가 0.7 이상되는 목록을 CSV 포멧(Mars_Base_Inventory_danger.csv)으로 저장
 create_csv_file('filtered_data.csv', header, dangerous_data)
 
+# 인화성 순서로 정렬된 데이터를 이진파일형태로 저장
+def save_as_binary_file(filename, data):
+    with open(filename, 'wb') as bin_file:
+        for row in data:
+            encoded_row = ','.join(row).strip()
+            encoded_data = encoded_row.encode('utf-8')
+            bin_file.write(struct.pack('I', len(encoded_data)))  # 데이터 길이 저장
+            bin_file.write(encoded_data)  # 데이터 저장
+# 함수 실행
+save_as_binary_file('Mars_Base_Inventory_List.bin', sort_data)
+
+# 저장된 Mars_Base_Inventory_List.bin 의 내용을 다시 읽어 들여서 화면에 내용을 출력
+def load_from_binary_file(filename):
+    data = []
+    with open(filename, 'rb') as bin_file:
+        while True:
+            # 데이터 길이 읽기
+            length_bytes = bin_file.read(4)
+            if not length_bytes:  # EOF 체크
+                break
+            length = struct.unpack('I', length_bytes)[0] # 데이터 길이
+
+            # 해당 길이만큼 데이터 읽기
+            encoded_data = bin_file.read(length)
+            decoded_row = encoded_data.decode('utf-8').split(',')
+            data.append(decoded_row)
+    print(data)
+
+# 함수 실행
+print('====== load_from_binary_file ======')
+load_from_binary_file('Mars_Base_Inventory_List.bin')
