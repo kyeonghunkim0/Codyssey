@@ -1,4 +1,5 @@
 import random
+import csv
 
 interal_temperature = "mars_base_internal_temperature"      # 화성 기지 내부 온도
 external_temperature = "mars_base_external_temperature"     # 화성 기지 외부 온도
@@ -32,20 +33,35 @@ class DummySensor:
     def get_env(self):
         return self.env_values
 
+    def create_csv_file(self, data):
+        with open('Mars_Base_Inventory_danger.csv', 'w', encoding='utf-8') as f:
+            for row in data:
+                f.write(row + '\n')
+
+
 # DummySensor 클래스를 ds라는 이름으로 인스턴스(Instance)로 만든다.
 ds = DummySensor()
 # 인스턴스화 한 DummySensor 클래스에서 set_env()와 get_env()를 차례로 호출해서 값을 확인한다.
 ds.set_env()
 env_data = ds.get_env()
+
+csv_data = []
 # 값 출력
 for key, value in env_data.items():
     if(key == interal_temperature or key == external_temperature): # 내부 온도, 외부 온도
         print(f"{key} : {value}°C")
+        csv_data.append(f"{key} : {value}°C")
     elif(key == internal_humidity): # 내부 습도
         print(f"{key} : {value}%")
+        csv_data.append(f"{key} : {value}%")
     elif(key == external_illuminance or key == internal_oxygen):  # 외부 광량, 내부 산소 농도
         print(f"{key} : {value} W/m2")
+        csv_data.append(f"{key} : {value} W/m2")
     elif(key == internal_co2): # 내부 이산화탄소 농도(소수점 둘째자리까지 반올림)
         print(f"{key} : {value: .2f}%")
+        csv_data.append(f"{key} : {value: .2f}%")
     else:
         print("")
+        csv_data.append("")
+
+ds.create_csv_file(csv_data)
