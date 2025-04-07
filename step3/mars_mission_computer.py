@@ -104,6 +104,7 @@ class MissionComputer:
         start_time = time.time()
 
         while self.running:
+            # env_value 설정
             self.ds.set_env()
 
             self.env_values[internal_temperature] = self.ds.env_values[internal_temperature]
@@ -112,7 +113,7 @@ class MissionComputer:
             self.env_values[external_illuminance] = self.ds.env_values[external_illuminance]
             self.env_values[internal_co2] = self.ds.env_values[internal_co2]
             self.env_values[internal_oxygen] = self.ds.env_values[internal_oxygen]
-
+            # JSON 형식으로 출력
             print(json.dumps(self.env_values, indent=4))
 
             for key in ENV_KEYS:
