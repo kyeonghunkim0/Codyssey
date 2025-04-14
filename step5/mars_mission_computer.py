@@ -2,6 +2,9 @@ import json
 import time
 import threading
 from collections import defaultdict
+from contextlib import nullcontext
+from logging import exception
+
 from step3.mars_mission_computer import DummySensor
 
 import platform
@@ -85,13 +88,17 @@ class MissionComputer:
         return info
     # CPU/메모리 사용량을 가져오는 메소드
     def get_mission_computer_load(self):
-        cpu_usage = psutil.cpu_percent(interval=1)  # 실시간 CPU 사용량 (1초 측정)
-        memory_usage = psutil.virtual_memory().percent    # 메모리 사용량
-        info = {
-            "CPU_USAGE_PERCENT": f"{cpu_usage}%",
-            "MEMORY_USAGE_PERCENT": f"{memory_usage}%"
-        }
-        return info
+        try:
+            cpu_usage = psutil.cpu_percent(interval=1)  # 실시간 CPU 사용량 (1초 측정)
+            memory_usage = psutil.virtual_memory().percent    # 메모리 사용량
+            info = {
+                "CPU_USAGE_PERCENT": f"{cpu_usage}%",
+                "MEMORY_USAGE_PERCENT": f"{memory_usage}%"
+            }
+            return info
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+            print(f"psutil 오류 발생: {e}")
+
     #  setting.txt 파일 생성
     def write_settings(self, settings, file_path="setting.txt"):
         with open(file_path, "w") as f:
@@ -126,5 +133,5 @@ if __name__ == "__main__":
     print("get_mission_computer_load()에 해당 결과를 JSON 형식으로 출력")
     print(json.dumps(computer_load, indent=4))
     # 파라미터로 출력되는 정보 설정
-    runComputer.write_settings(computer_load["CPU_USAGE_PERCENT"])
+    runComputer.write_settings(computer_info)
     runComputer.read_settings_from_file()

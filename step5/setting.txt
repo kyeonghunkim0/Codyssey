@@ -1,1 +1,5 @@
-13.5%
+OS: Darwin
+OS_VERSION: Darwin Kernel Version 24.3.0: Thu Jan  2 20:24:06 PST 2025; root:xnu-11215.81.4~3/RELEASE_ARM64_T8103
+CPU_TYPE: arm
+CPU_CORE_COUNT: 8
+MEMORY: 16.0

@@ -1,6 +1,6 @@
-mars_base_internal_temperature : 24°C
-mars_base_external_temperature : 3°C
-mars_base_internal_humidity : 51%
-mars_base_external_illuminance : 571 W/m2
+mars_base_internal_temperature : 19°C
+mars_base_external_temperature : 20°C
+mars_base_internal_humidity : 52%
+mars_base_external_illuminance : 599 W/m2
 mars_base_internal_co2 :  0.09%
-mars_base_internal_oxygen : 4 W/m2
+mars_base_internal_oxygen : 5 W/m2
