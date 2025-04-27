@@ -47,6 +47,7 @@ class Calculator(QWidget):  # QWidget 상속 받아 하나의 창으로 구성
                 button.clicked.connect(self.buttonClicked)
         # 전체 레이아웃 구성: 결과 출력 창 + 버튼 그리드
         main_layout = QVBoxLayout()
+
         main_layout.addWidget(self.display) # 결과 출력 창 추가
         main_layout.addLayout(grid)         # 버튼 그리드 추가
         self.setLayout(main_layout)         # 최종 레이아웃 적용
@@ -86,6 +87,8 @@ class Calculator(QWidget):  # QWidget 상속 받아 하나의 창으로 구성
             except:
                 self.display.setText("Error")
                 self.current_expression = ""
+
+            self.adjustFontSize()
         else:
             # 숫자나 연산자 버튼
             if self.display.text() == "0" and text not in ['+', '-', '×', '÷', '.']:    # 첫 입력이 숫자일 때 0 제거
@@ -95,6 +98,16 @@ class Calculator(QWidget):  # QWidget 상속 받아 하나의 창으로 구성
                 # 기존 수식에 버튼 텍스트를 추가
                 self.current_expression += text
                 self.display.setText(self.current_expression)
+    # 출력 후 글자 길이 따라 폰트 크기 조정
+    def adjustFontSize(self):
+        length = len(self.display.text())
+
+        if length <= 7:
+            self.display.setStyleSheet("font-size: 30px; padding: 10px;")
+        elif length <= 10:
+            self.display.setStyleSheet("font-size: 24px; padding: 10px;")
+        else:
+            self.display.setStyleSheet("font-size: 18px; padding: 10px;")
 
 
 if __name__ == "__main__":
