@@ -5,24 +5,30 @@ javis.py
 
 시스템 마이크 인식 후 음성을 녹음하고, records 폴더에
 ‘YYYYMMDD-HHMMSS.wav’ 형식으로 저장합니다.
+
 또한, 특정 날짜 범위의 녹음 파일을 조회하는 기능을 제공합니다.
+마이크 녹음, 녹음 파일 목록, 녹음파일 STT 변환(csv), 키워드 검색까지 지원
+
 '''
 
 import os
 import datetime
 import argparse
 import wave
+import csv
 
 import pyaudio
+import speech_recognition as sr
 
+# 실행 : ./step10/javis.py record
+# 조회 : ./step10/javis.py list 20250501 20250528
+# 조합 : ./step10/javis.py stt 20250608-222902.wav
 
 # 녹음 파일이 저장될 디렉터리 이름
 RECORDS_DIR = './step10/records'
 
-# 실행 : ./step10/javis.py record
-# 조회 : ./step10/javis.py list 20250501 20250528
-
 class AudioRecorder:
+    '''시스템 마이크에서 오디오를 녹음하는 클래스'''
 
     def __init__(self,
                  channels=1,
@@ -35,21 +41,23 @@ class AudioRecorder:
         self.audio_format = audio_format
         self.pyaudio_instance = pyaudio.PyAudio()
         self.stream = None
-    # 현재시간(YYYYMMDD-HHMMSS) 파일 이름 생성
+
     def _get_filename(self):
+        '''현재 시각을 기반으로 파일 이름 생성'''
         now = datetime.datetime.now()
         return now.strftime('%Y%m%d-%H%M%S') + '.wav'
-    # records 디렉터리가 없으면 생성
+
     def _ensure_records_dir(self):
+        '''records 디렉터리가 없으면 생성'''
         if not os.path.isdir(RECORDS_DIR):
             os.makedirs(RECORDS_DIR)
-    # 녹음 시작 후 [Ctrl + C] 입력 시 녹음 종료 후에 파일 저장
+
     def start_recording(self):
+        '''녹음을 시작'''
         self._ensure_records_dir()
         filename = self._get_filename()
         filepath = os.path.join(RECORDS_DIR, filename)
 
-        # 스트림 오픈
         self.stream = self.pyaudio_instance.open(
             format=self.audio_format,
             channels=self.channels,
@@ -68,11 +76,10 @@ class AudioRecorder:
         except KeyboardInterrupt:
             print('\n녹음을 중지합니다.')
         finally:
-            # 스트림 정리
             self.stream.stop_stream()
             self.stream.close()
             self.pyaudio_instance.terminate()
-            # WAV 파일로 저장
+
             with wave.open(filepath, 'wb') as wf:
                 wf.setnchannels(self.channels)
                 wf.setsampwidth(
@@ -83,14 +90,9 @@ class AudioRecorder:
 
             print(f'파일이 저장되었습니다: {filepath}')
 
-def show_recordings(start_date, end_date):
-    '''
-    지정한 날짜 범위의 녹음 파일 목록을 출력합니다.
 
-    Args:
-        start_date (str): 시작 날짜 'YYYYMMDD'
-        end_date (str): 종료 날짜 'YYYYMMDD'
-    '''
+def show_recordings(start_date, end_date):
+    '''특정 날짜 범위 내의 녹음파일 조회'''
     if not os.path.isdir(RECORDS_DIR):
         print('녹음 폴더가 존재하지 않습니다.')
         return
@@ -108,7 +110,6 @@ def show_recordings(start_date, end_date):
     for filename in files:
         if not filename.lower().endswith('.wav'):
             continue
-
         basename = os.path.splitext(filename)[0]
         try:
             file_dt = datetime.datetime.strptime(
@@ -128,26 +129,107 @@ def show_recordings(start_date, end_date):
         print('해당 범위에 녹음 파일이 없습니다.')
 
 
+def stt_audiofile(wav_filename):
+    '''
+    지정한 wav 파일을 STT 변환 후 CSV로 저장
+    Args:
+        wav_filename (str): 녹음 wav 파일명 (records/ 하위)
+    '''
+    filepath = os.path.join(RECORDS_DIR, wav_filename)
+    if not os.path.isfile(filepath):
+        print(f'파일을 찾을 수 없습니다: {filepath}')
+        return
+
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(filepath) as source:
+        audio = recognizer.record(source)
+
+    print('STT 변환 중... (Google Web Speech API 사용)')
+
+    try:
+        # Google Web Speech API 무료 버전 사용 (인터넷 필요)
+        text = recognizer.recognize_google(audio, language='ko-KR')
+        # 한 문장 전체로 인식됨
+        segments = [(0, text)]
+    except sr.UnknownValueError:
+        print('음성을 인식할 수 없습니다.')
+        segments = []
+    except sr.RequestError as e:
+        print(f'STT 서비스 요청 실패: {e}')
+        return
+
+    # csv 파일로 저장
+    csv_filename = os.path.splitext(wav_filename)[0] + '.csv'
+    csv_path = os.path.join(RECORDS_DIR, csv_filename)
+    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        for segment in segments:
+            time_str = f'시간 : {segment[0]}초'
+            text_str = f'인식된 텍스트 : {segment[1]}'
+            writer.writerow([time_str, text_str])
+
+    print(f'CSV 파일로 저장됨: {csv_path}')
+
+
+def search_keyword_in_csv(keyword):
+    '''
+    records 폴더 내 모든 CSV 파일에서 키워드가 포함된 행을 찾아 출력
+    Args:
+        keyword (str): 검색할 키워드
+    '''
+    if not os.path.isdir(RECORDS_DIR):
+        print('녹음 폴더가 존재하지 않습니다.')
+        return
+
+    found = False
+    for filename in os.listdir(RECORDS_DIR):
+        if not filename.lower().endswith('.csv'):
+            continue
+        csv_path = os.path.join(RECORDS_DIR, filename)
+        with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                # row는 ["시간 : 0초", "인식된 텍스트 : 안녕하세요"] 형태
+                if len(row) < 2:
+                    continue
+                time_part = row[0]
+                text_part = row[1]
+                # "인식된 텍스트 : " 이후의 실제 텍스트만 추출
+                if keyword in text_part:
+                    print(f'[{filename}] {time_part}, {text_part}')
+                    found = True
+    if not found:
+        print('키워드가 포함된 텍스트를 찾을 수 없습니다.')
+
+
 def main():
-    '''명령행 인터페이스: 녹음(record) 또는 목록 조회(list)'''
+    '''명령행 인터페이스'''
     parser = argparse.ArgumentParser(
-        description='마이크 녹음 및 녹음 파일 목록 조회 도구'
+        description='마이크 녹음, STT, 목록 조회, 키워드 검색 도구'
     )
     subparsers = parser.add_subparsers(dest='command')
 
-    # record 서브커맨드
+    # 녹음
     subparsers.add_parser('record', help='새 녹음을 시작합니다')
 
-    # list 서브커맨드
+    # 녹음 목록
     list_parser = subparsers.add_parser(
         'list', help='녹음 파일 목록을 조회합니다'
     )
-    list_parser.add_argument(
-        'start_date', help="시작 날짜 (YYYYMMDD)"
+    list_parser.add_argument('start_date', help="시작 날짜 (YYYYMMDD)")
+    list_parser.add_argument('end_date', help="종료 날짜 (YYYYMMDD)")
+
+    # STT
+    stt_parser = subparsers.add_parser(
+        'stt', help='녹음 wav 파일을 STT하여 csv로 저장'
     )
-    list_parser.add_argument(
-        'end_date', help="종료 날짜 (YYYYMMDD)"
+    stt_parser.add_argument('wav_filename', help="녹음된 wav 파일명 (예: 20240607-213215.wav)")
+
+    # 키워드 검색
+    search_parser = subparsers.add_parser(
+        'search', help='CSV 파일 내 키워드 검색'
     )
+    search_parser.add_argument('keyword', help="검색할 키워드")
 
     args = parser.parse_args()
 
@@ -156,6 +238,10 @@ def main():
         recorder.start_recording()
     elif args.command == 'list':
         show_recordings(args.start_date, args.end_date)
+    elif args.command == 'stt':
+        stt_audiofile(args.wav_filename)
+    elif args.command == 'search':
+        search_keyword_in_csv(args.keyword)
     else:
         parser.print_help()
 
