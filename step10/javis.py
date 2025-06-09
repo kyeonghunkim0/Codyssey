@@ -132,8 +132,6 @@ def show_recordings(start_date, end_date):
 def stt_audiofile(wav_filename):
     '''
     지정한 wav 파일을 STT 변환 후 CSV로 저장
-    Args:
-        wav_filename (str): 녹음 wav 파일명 (records/ 하위)
     '''
     filepath = os.path.join(RECORDS_DIR, wav_filename)
     if not os.path.isfile(filepath):
@@ -174,8 +172,6 @@ def stt_audiofile(wav_filename):
 def search_keyword_in_csv(keyword):
     '''
     records 폴더 내 모든 CSV 파일에서 키워드가 포함된 행을 찾아 출력
-    Args:
-        keyword (str): 검색할 키워드
     '''
     if not os.path.isdir(RECORDS_DIR):
         print('녹음 폴더가 존재하지 않습니다.')
@@ -203,7 +199,6 @@ def search_keyword_in_csv(keyword):
 
 
 def main():
-    '''명령행 인터페이스'''
     parser = argparse.ArgumentParser(
         description='마이크 녹음, STT, 목록 조회, 키워드 검색 도구'
     )
