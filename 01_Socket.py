@@ -23,9 +23,9 @@ class ChatServer:
     def __init__(self, host: str, port: int) -> None:
         self.host = host
         self.port = port
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP
         # 빠른 재시작을 위해 SO_REUSEADDR 활성화
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # socket Option
         self._clients_lock = threading.Lock()
         # 클라이언트 소켓 -> 닉네임 매핑
         self._clients: Dict[socket.socket, str] = {}
@@ -34,7 +34,7 @@ class ChatServer:
     def start(self) -> None:
         """서버를 시작하고 접속 대기 루프에 진입한다."""
         self._sock.bind((self.host, self.port))
-        self._sock.listen()
+        self._sock.listen() # OS 요청
         print(f'[INFO] ChatServer listening on {self.host}:{self.port}')
 
         try:
@@ -169,7 +169,7 @@ class ChatServer:
                             break
             return True
         return False
-
+    # 받기
     def _recv_line(self, conn: socket.socket) -> Optional[str]:
         """개행 기준으로 한 줄을 수신한다. 연결 종료 시 None 반환."""
         chunks: list[bytes] = []
@@ -192,7 +192,7 @@ class ChatServer:
     def _next_default_name(self) -> str:
         self._user_seq += 1
         return f'사용자{self._user_seq}'
-
+    # 닉네임
     def _negotiate_nickname(self, conn: socket.socket) -> str:
         self._safe_send(conn, WELCOME_PROMPT)
         nick = self._recv_line(conn)
@@ -205,7 +205,7 @@ class ChatServer:
         nick = ' '.join(nick.split())[:30]
         nick = nick or self._next_default_name()
         return self._unique_nickname(nick)
-
+    # 통신
     def _handle_client(self, conn: socket.socket, addr: Tuple[str, int]) -> None:
         peer = f'{addr[0]}:{addr[1]}'
         try:
