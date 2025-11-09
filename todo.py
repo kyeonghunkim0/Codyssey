@@ -4,15 +4,15 @@
 # source .venv/bin/activate
 # pip install "fastapi[all]"
 
-# GET curl -X GET "http://127.0.0.1:8000/todos"
+# curl -X GET "http://127.0.0.1:8000/todos"
 
-# POST curl -X POST 'http://127.0.0.1:8000/todos' \
+# curl -X POST 'http://127.0.0.1:8000/todos' \
 # -H 'Content-Type: application/json' \
 # -d '{"task": "이건 급한 일이야", "priority": "high"}'
 
 # curl -X POST 'http://127.0.0.1:8000/todos' \
 # -H 'Content-Type: application/json' \
-# -d '{}'
+# -d '{"task" : "", "priority" : ""}'
 
 
 from fastapi import FastAPI, APIRouter, HTTPException, status
@@ -25,9 +25,6 @@ todo_list: List[Dict[str, Any]] = []
 router = APIRouter()
 
 
-# (수행과제 7) add_todo ()
-# POST 방식, todo_list에 항목 추가, 입출력은 Dict
-# (제약사항 C8) 함수 이름은 소문자와 언더라인 사용
 @router.post('/todos')
 def add_todo(todo: Dict[str, Any]):
     """
