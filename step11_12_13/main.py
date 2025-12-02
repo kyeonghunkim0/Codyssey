@@ -13,4 +13,7 @@ def read_root():
 
 app.include_router(question_router)
 
+from fastapi.staticfiles import StaticFiles
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
 # uvicorn main:app --reload

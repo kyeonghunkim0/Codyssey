@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+import datetime
 from sqlalchemy.orm import Session
 # step11 폴더 내의 database.py 및 models.py를 참조
 from database import get_db
@@ -25,3 +26,16 @@ def question_list(db_manager=Depends(get_db)):
         
         # 쿼리 결과를 반환
         return _question_list
+
+
+@router.post("/create", status_code=204)
+def question_create(_question_create: question_schema.QuestionCreate, db_manager=Depends(get_db)):
+    """
+    질문 등록
+    """
+    with db_manager as db:
+        question = QuestionModel(subject=_question_create.subject,
+                                 content=_question_create.content,
+                                 create_date=datetime.datetime.now())
+        db.add(question)
+        db.commit()
